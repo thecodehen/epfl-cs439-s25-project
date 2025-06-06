@@ -62,8 +62,7 @@ class FloraAdam(Optimizer):
                 if p.requires_grad:
                     self.state[p]["seed"] = params_idx
 
-    @staticmethod
-    def _should_compress(param_group: Dict, param_shape: tuple[int, ...]) -> tuple[bool, bool, bool]:
+    def _should_compress(self, param_group: Dict, param_shape: tuple[int, ...]) -> bool:
         factored = len(param_shape) == 2
         should_compress= (
                 param_group["rank"] is not None
