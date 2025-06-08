@@ -6,6 +6,45 @@ from torch.optim.optimizer import Optimizer
 
 from utils import stable_randn, next_seed, split_seed
 
+def _down_proj(seed, rank, tensor):
+    lseed, rseed = split_seed(seed)
+    if tensor.shape[0] < tensor.shape[-1]:
+        left_projection = stable_randn(
+            (rank, tensor.shape[0]),
+            seed=lseed,
+            device=tensor.device,
+            dtype=tensor.dtype,
+        ) / math.sqrt(rank)
+
+        return left_projection @ tensor
+    else:
+        right_projection = stable_randn(
+            (tensor.shape[-1], rank),
+            seed=rseed,
+            device=tensor.device,
+            dtype=tensor.dtype,
+        ) / math.sqrt(rank)
+        return tensor @ right_projection
+
+def _up_proj(seed, rank, shape, ctensor):
+    lseed, rseed = split_seed(seed)
+    if shape[0] < shape[-1]:
+        left_projection = stable_randn(
+            (rank, shape[0]),
+            seed=lseed,
+            device=ctensor.device,
+            dtype=ctensor.dtype,
+        ) / math.sqrt(rank)
+        return left_projection.t() @ ctensor
+    else:
+        right_projection = stable_randn(
+            (shape[-1], rank),
+            seed=rseed,
+            device=ctensor.device,
+            dtype=ctensor.dtype,
+        ) / math.sqrt(rank)
+        return ctensor @ right_projection.t()
+
 class FloraAdam(Optimizer):
     def __init__(
             self,
@@ -54,6 +93,8 @@ class FloraAdam(Optimizer):
             with torch.enable_grad():
                 loss = closure()
 
+        compressed_grads: list[dict[str, Any]] = []
+
         for group in self.param_groups:
             lr, (beta1, beta2), eps = group['lr'], group['betas'], group['eps']
 
@@ -92,45 +133,6 @@ class FloraAdam(Optimizer):
                 t = state['step']
 
                 if should_compress:
-                    def _down_proj(seed, rank, tensor):
-                        lseed, rseed = split_seed(seed)
-                        if tensor.shape[0] < tensor.shape[-1]:
-                            left_projection = stable_randn(
-                                (rank, tensor.shape[0]),
-                                seed=lseed,
-                                device=tensor.device,
-                                dtype=tensor.dtype,
-                            ) / math.sqrt(rank)
-
-                            return left_projection @ tensor
-                        else:
-                            right_projection = stable_randn(
-                                (tensor.shape[-1], rank),
-                                seed=rseed,
-                                device=tensor.device,
-                                dtype=tensor.dtype,
-                            ) / math.sqrt(rank)
-                        return tensor @ right_projection
-
-                    def _up_proj(seed, rank, shape, ctensor):
-                        lseed, rseed = split_seed(seed)
-                        if shape[0] < shape[-1]:
-                            left_projection = stable_randn(
-                                (rank, shape[0]),
-                                seed=lseed,
-                                device=ctensor.device,
-                                dtype=ctensor.dtype,
-                            ) / math.sqrt(rank)
-                            return left_projection.t() @ ctensor
-                        else:
-                            right_projection = stable_randn(
-                                (shape[-1], rank),
-                                seed=rseed,
-                                device=ctensor.device,
-                                dtype=ctensor.dtype,
-                            ) / math.sqrt(rank)
-                            return ctensor @ right_projection.t()
-
                     _current_seed = state["seed"]
 
                     cgrad = _down_proj(seed=_current_seed, rank=group["rank"], tensor=grad)
@@ -151,6 +153,12 @@ class FloraAdam(Optimizer):
                     p.addcdiv_(_up_proj(seed=_current_seed, rank=group["rank"], shape=grad_shape, ctensor=corrected_avg),
                                denom,
                                value=-lr)
+
+                    compressed_grads.append({
+                        'grad': grad,
+                        'cgrad': cgrad,
+                        'compressed': True,
+                    })
 
                     # Time for a new seed
                     if state["step"] % group["kappa"] == 0:
@@ -188,4 +196,10 @@ class FloraAdam(Optimizer):
                     denom = corrected_avg_sq.sqrt().add_(eps)
                     p.addcdiv_(corrected_avg, denom, value=-lr)
 
-        return loss
+                    compressed_grads.append({
+                        'grad': grad,
+                        'cgrad': grad,
+                        'compressed': False,
+                    })
+
+        return loss, compressed_grads
