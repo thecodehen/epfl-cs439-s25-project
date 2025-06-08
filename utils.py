@@ -1,6 +1,8 @@
 from typing import Optional, Sequence, Union
 
+from datasets import load_dataset
 import torch
+from torchvision import transforms
 
 def stable_randn(
         shape: Union[int, Sequence[int]],
@@ -30,3 +32,26 @@ def split_seed(seed: int) -> tuple:
     return tuple(
         torch.randint(0, torch.iinfo(torch.int64).max, (2,), generator=generator, device=generator.device).tolist()
     )
+
+def get_mnist(num_proc: int=16):
+    def transform_data(examples):
+        # Flatten the images and convert to float32
+        images = [transforms.ToTensor()(image).flatten() for image in examples['image']]
+        labels = examples['label']
+        return {'inputs': images, 'labels': labels}
+
+    full_dataset = load_dataset('ylecun/mnist')
+    full_dataset = full_dataset.map(
+        transform_data,
+        remove_columns=['image', 'label'],
+        num_proc=num_proc,
+        batched=True,
+    )
+    full_dataset.set_format(type='torch', columns=['inputs', 'labels'])
+
+    train_valid = full_dataset['train'].train_test_split(test_size=0.1)
+    train_dataset = train_valid['train']
+    validation_dataset = train_valid['test']
+    test_dataset = full_dataset['test']
+
+    return train_dataset, validation_dataset, test_dataset
