@@ -4,12 +4,18 @@ from typing import Any, Dict, Iterable, Union
 import torch
 from torch.optim.optimizer import Optimizer
 
-from utils import stable_randn, next_seed, split_seed
+from utils import (
+    stable_randn,
+    stable_uniform,
+    stable_discrete,
+    next_seed,
+    split_seed,
+)
 
-def _down_proj(seed, rank, tensor):
+def _down_proj(seed, rank, tensor, rand_func=stable_randn):
     lseed, rseed = split_seed(seed)
     if tensor.shape[0] < tensor.shape[-1]:
-        left_projection = stable_randn(
+        left_projection = rand_func(
             (rank, tensor.shape[0]),
             seed=lseed,
             device=tensor.device,
@@ -18,7 +24,7 @@ def _down_proj(seed, rank, tensor):
 
         return left_projection @ tensor
     else:
-        right_projection = stable_randn(
+        right_projection = rand_func(
             (tensor.shape[-1], rank),
             seed=rseed,
             device=tensor.device,
@@ -26,10 +32,10 @@ def _down_proj(seed, rank, tensor):
         ) / math.sqrt(rank)
         return tensor @ right_projection
 
-def _up_proj(seed, rank, shape, ctensor):
+def _up_proj(seed, rank, shape, ctensor, rand_func=stable_randn):
     lseed, rseed = split_seed(seed)
     if shape[0] < shape[-1]:
-        left_projection = stable_randn(
+        left_projection = rand_func(
             (rank, shape[0]),
             seed=lseed,
             device=ctensor.device,
@@ -37,7 +43,7 @@ def _up_proj(seed, rank, shape, ctensor):
         ) / math.sqrt(rank)
         return left_projection.t() @ ctensor
     else:
-        right_projection = stable_randn(
+        right_projection = rand_func(
             (shape[-1], rank),
             seed=rseed,
             device=ctensor.device,
@@ -55,6 +61,7 @@ class FloraAdam(Optimizer):
             rank: int = None,
             kappa: int = 1000,
             seed: int = 0,
+            rand_distribution: str = 'gaussian',
     ) -> None:
 
         defaults = {
@@ -66,6 +73,15 @@ class FloraAdam(Optimizer):
 
         }
         super().__init__(params, defaults)
+
+        if rand_distribution == 'gaussian':
+            self.rand_func = stable_randn
+        elif rand_distribution == 'uniform':
+            self.rand_func = stable_uniform
+        elif rand_distribution == 'discrete':
+            self.rand_func = stable_discrete
+        else:
+            raise NotImplementedError
 
         params_idx = seed
         for group in self.param_groups:
@@ -135,7 +151,7 @@ class FloraAdam(Optimizer):
                 if should_compress:
                     _current_seed = state["seed"]
 
-                    cgrad = _down_proj(seed=_current_seed, rank=group["rank"], tensor=grad)
+                    cgrad = _down_proj(seed=_current_seed, rank=group["rank"], tensor=grad, rand_func=self.rand_func)
                     # Update biased first moment estimate
                     exp_avg.mul_(beta1).add_(cgrad, alpha=1 - beta1)
                     # Update biased second raw moment estimate
@@ -150,7 +166,7 @@ class FloraAdam(Optimizer):
                     # Parameter update
                     denom = corrected_avg_sq.sqrt().add_(eps)
 
-                    p.addcdiv_(_up_proj(seed=_current_seed, rank=group["rank"], shape=grad_shape, ctensor=corrected_avg),
+                    p.addcdiv_(_up_proj(seed=_current_seed, rank=group["rank"], shape=grad_shape, ctensor=corrected_avg, rand_func=self.rand_func),
                                denom,
                                value=-lr)
 

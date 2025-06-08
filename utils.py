@@ -16,6 +16,29 @@ def stable_randn(
     rn = torch.randn(shape, generator=generator, device=generator.device, dtype=dtype)
     return rn
 
+def stable_uniform(
+        shape: Union[int, Sequence[int]],
+        seed: int,
+        device: Optional[Union[str, torch.device]] = None,
+        dtype: Optional[torch.dtype] = torch.float32,
+) -> torch.Tensor:
+    if device is None:
+        device = torch.device("cpu")
+    generator = torch.Generator(device=device).manual_seed(seed)
+    rn = 2 * torch.rand(shape, generator=generator, device=generator.device, dtype=dtype) - 1
+    return rn
+
+def stable_discrete(
+        shape: Union[int, Sequence[int]],
+        seed: int,
+        device: Optional[Union[str, torch.device]] = None,
+        dtype: Optional[torch.dtype] = torch.float32,
+) -> torch.Tensor:
+    if device is None:
+        device = torch.device("cpu")
+    generator = torch.Generator(device=device).manual_seed(seed)
+    rn = torch.randint(0, 3, shape, generator=generator, device=generator.device, dtype=dtype)
+    return rn
 
 def next_seed(seed: int, adv: int = 0xF) -> int:
     """
