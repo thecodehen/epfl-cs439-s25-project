@@ -25,7 +25,7 @@ def stable_uniform(
     if device is None:
         device = torch.device("cpu")
     generator = torch.Generator(device=device).manual_seed(seed)
-    rn = 2 * torch.rand(shape, generator=generator, device=generator.device, dtype=dtype) - 1
+    rn = torch.sqrt(torch.tensor(3)) * (2 * torch.rand(shape, generator=generator, device=generator.device, dtype=dtype) - 1)
     return rn
 
 def stable_discrete(
@@ -37,7 +37,7 @@ def stable_discrete(
     if device is None:
         device = torch.device("cpu")
     generator = torch.Generator(device=device).manual_seed(seed)
-    rn = torch.randint(0, 3, shape, generator=generator, device=generator.device, dtype=dtype)
+    rn = 2 * (torch.randint(0, 2, shape, generator=generator, device=generator.device, dtype=dtype) - 0.5)
     return rn
 
 def next_seed(seed: int, adv: int = 0xF) -> int:
