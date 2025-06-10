@@ -1,11 +1,35 @@
-import math
-from typing import Any, Dict, Iterable, Union
-
 import numpy as np
-import torch
 from torch.optim.optimizer import Optimizer
+from typing import Any, Dict, Iterable, Optional, Sequence, Union
+import torch
+import math
 
-from utils import stable_randn, next_seed, split_seed
+def split_seed(seed: int) -> tuple[int, int]:
+    generator = torch.Generator().manual_seed(seed)
+    return tuple(
+        torch.randint(0, torch.iinfo(torch.int64).max, (2,), generator=generator, device=generator.device).tolist()
+    )
+
+def next_seed(seed: int, adv: int = 0xF) -> int:
+    """
+    This is a naive helper function to generate a new seed from the given seed.
+    """
+    generator = torch.Generator().manual_seed(seed)
+    return torch.randint(
+        0, torch.iinfo(torch.int64).max, (adv,), generator=generator, device=generator.device
+    ).tolist()[-1]
+
+def stable_randn(
+    shape: Union[int, Sequence[int]],
+    seed: int,
+    device: Optional[Union[str, torch.device]] = None,
+    dtype: Optional[torch.dtype] = torch.float32,
+) -> torch.Tensor:
+    if device is None:
+        device = torch.device("cpu")
+    generator = torch.Generator(device=device).manual_seed(seed)
+    rn = torch.randn(shape, generator=generator, device=generator.device, dtype=dtype)
+    return rn
 
 class FloraAdamDecreasingRanks(Optimizer):
     def __init__(
@@ -14,17 +38,22 @@ class FloraAdamDecreasingRanks(Optimizer):
         lr:float = None,
         betas: tuple[float, float] = (0.9, 0.999),
         eps: float = 1e-8,
-        rank: int = None,
+        rankFrom: int = None,
+        rankTo: int = None,
         kappa: int = 1000,
         seed: int = 0,
+        epochs: int = 100,
     ) -> None:
 
         defaults = {
             "lr": lr,
             "betas": betas,
             "eps": eps,
-            "rank": rank,
+            "rank": rankFrom,
+            "rankFrom": rankFrom,
+            "rankTo": rankTo,
             "kappa": kappa,
+            "epochs": epochs,
 
         }
         super().__init__(params, defaults)
@@ -91,6 +120,7 @@ class FloraAdamDecreasingRanks(Optimizer):
                         state['exp_avg_sq'] = torch.zeros_like(p)
 
                 exp_avg, exp_avg_sq = state['exp_avg'], state['exp_avg_sq']
+                
                 state['step'] += 1
                 t = state['step']
 
@@ -157,7 +187,7 @@ class FloraAdamDecreasingRanks(Optimizer):
 
                     # Time for a new seed
                     if state["step"] % group["kappa"] == 0:
-                        _new_rank = np.round(group["rank"] - (group["rank"] * state["step"]/2000)).astype(int)
+                        _new_rank = np.round(group["rankFrom"] - ((group["rankFrom"] - group["rankTo"]) * state["step"]/group['epochs'])).astype(int)
 
                         _next_seed = next_seed(state["seed"])
 
