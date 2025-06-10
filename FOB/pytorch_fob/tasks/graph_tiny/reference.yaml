@@ -1,0 +1,14 @@
+task:
+  name: graph_tiny
+  max_epochs: 200
+  model:  # GCN
+    hidden_channels: 16
+    reset_params: true
+optimizer:
+  name: adamw_baseline
+  learning_rate: 1.0e-1
+  weight_decay: 0
+  lr_scheduler:
+    eta_min_factor: 1.0  # reference implementation used no lr scheduling
+engine:
+  early_stopping: 10

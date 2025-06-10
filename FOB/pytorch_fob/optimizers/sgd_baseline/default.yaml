@@ -1,0 +1,6 @@
+optimizer:
+  name: sgd_baseline
+  learning_rate: 1.e-2  # SGD parameter
+  momentum: 0.9         # SGD parameter
+  weight_decay: 1.e-4   # SGD parameter
+  nesterov: false       # enables Nesterov momentum for SGD

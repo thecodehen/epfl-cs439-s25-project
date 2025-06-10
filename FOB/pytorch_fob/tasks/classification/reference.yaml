@@ -1,0 +1,16 @@
+task:
+  name: classification
+  output_dir_name: classification_reference
+  batch_size: 128
+  max_epochs: 40
+  label_smoothing: 0.0
+optimizer:
+  name: sgd_baseline
+  learning_rate: 0.01
+  momentum: 0.9
+  weight_decay: 5.e-4
+  lr_scheduler:
+    scheduler: stepwise
+    interval: epoch
+    step_size: 10
+    gamma: 0.2  # paper decreases by factor 5
