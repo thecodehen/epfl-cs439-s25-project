@@ -123,7 +123,7 @@ def main():
 
     # save the models
     timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-    save_path = pathlib.Path('results') / f"{args.rand_distribution}-seed_{args.seed}-{timestamp}"
+    save_path = pathlib.Path('results') / f"{args.rand_distribution}-rank_{args.rank}-seed_{args.seed}-{timestamp}"
     save_path.mkdir(parents=True, exist_ok=True)
     torch.save(model.state_dict(), save_path / f"model.pth")
     np.save(save_path / f"train_losses.npy", train_losses)
