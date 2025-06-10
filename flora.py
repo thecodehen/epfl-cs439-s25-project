@@ -61,7 +61,7 @@ class FloraAdam(Optimizer):
             rank: int = None,
             kappa: int = 1000,
             seed: int = 0,
-            rand_distribution: str = 'gaussian',
+            rand_distribution: str = 'normal',
     ) -> None:
 
         defaults = {
@@ -74,7 +74,7 @@ class FloraAdam(Optimizer):
         }
         super().__init__(params, defaults)
 
-        if rand_distribution == 'gaussian':
+        if rand_distribution == 'normal':
             self.rand_func = stable_randn
         elif rand_distribution == 'uniform':
             self.rand_func = stable_uniform
