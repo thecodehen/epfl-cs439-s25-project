@@ -8,6 +8,7 @@ from utils import (
     stable_randn,
     stable_uniform,
     stable_discrete,
+    stable_discrete_3,
     next_seed,
     split_seed,
 )
@@ -80,6 +81,8 @@ class FloraAdam(Optimizer):
             self.rand_func = stable_uniform
         elif rand_distribution == 'discrete':
             self.rand_func = stable_discrete
+        elif rand_distribution == 'discrete_3':
+            self.rand_func = stable_discrete_3
         else:
             raise NotImplementedError
 

@@ -40,6 +40,18 @@ def stable_discrete(
     rn = 2 * (torch.randint(0, 2, shape, generator=generator, device=generator.device, dtype=dtype) - 0.5)
     return rn
 
+def stable_discrete_3(
+        shape: Union[int, Sequence[int]],
+        seed: int,
+        device: Optional[Union[str, torch.device]] = None,
+        dtype: Optional[torch.dtype] = torch.float32,
+) -> torch.Tensor:
+    if device is None:
+        device = torch.device("cpu")
+    generator = torch.Generator(device=device).manual_seed(seed)
+    rn = torch.sqrt(torch.tensor(3 / 2)) * (torch.randint(0, 3, shape, generator=generator, device=generator.device, dtype=dtype) - 1)
+    return rn
+
 def next_seed(seed: int, adv: int = 0xF) -> int:
     """
     This is a naive helper function to generate a new seed from the given seed.
