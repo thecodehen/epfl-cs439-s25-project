@@ -31,6 +31,7 @@ def train_model(model, epochs, train_dataset, validation_dataset, loss_fn, optim
 
     train_losses = []
     validation_losses = []
+    validation_accs = []
     for epoch in tqdm(range(epochs)):
         # Make sure gradient tracking is on, and do a pass over the data
         model.train(True)
@@ -45,12 +46,15 @@ def train_model(model, epochs, train_dataset, validation_dataset, loss_fn, optim
         with torch.no_grad():
             # Make predictions for this batch
             voutputs = model(validation_inputs)
+            all_preds = voutputs.argmax(dim=1)
+            validation_acc = accuracy_score(validation_labels.cpu(), all_preds.cpu())
+            validation_accs.append(validation_acc)
             validation_loss = loss_fn(voutputs, validation_labels)
             validation_losses.append(validation_loss.item())
 
         epoch += 1
 
-    return train_losses, validation_losses
+    return train_losses, validation_losses, validation_accs
 
 def evaluate_model(model, test_dataset, device=None):
     inputs = test_dataset['inputs'].to(device)

@@ -68,7 +68,7 @@ def split_seed(seed: int) -> tuple:
         torch.randint(0, torch.iinfo(torch.int64).max, (2,), generator=generator, device=generator.device).tolist()
     )
 
-def get_mnist(num_proc: int=16):
+def get_mnist(num_proc: int=16, seed: int=42):
     def transform_data(examples):
         # Flatten the images and convert to float32
         images = [transforms.ToTensor()(image).flatten() for image in examples['image']]
@@ -84,7 +84,8 @@ def get_mnist(num_proc: int=16):
     )
     full_dataset.set_format(type='torch', columns=['inputs', 'labels'])
 
-    train_valid = full_dataset['train'].train_test_split(test_size=0.1)
+    full_dataset['train'] = full_dataset['train'].shuffle(seed=seed)
+    train_valid = full_dataset['train'].train_test_split(test_size=0.1, seed=seed)
     train_dataset = train_valid['train']
     validation_dataset = train_valid['test']
     test_dataset = full_dataset['test']
