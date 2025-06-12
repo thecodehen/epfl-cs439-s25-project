@@ -53,7 +53,7 @@ def main():
 
     # save the models
     timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-    save_path = pathlib.Path('results') / 'adam' / f"lr_{args.lr}-hidden_size_{args.hidden_size}-clip_norm_{args.clip_norm}-seed_{args.seed}-{timestamp}"
+    save_path = pathlib.Path('results') / 'adam' / f"lr_{args.lr}-hidden_size_{args.hidden_size}-clip_norm_{args.clip_norm}-seed_{args.seed}-epochs_{args.epochs}-{timestamp}"
     save_path.mkdir(parents=True, exist_ok=True)
     torch.save(model.state_dict(), save_path / f"model.pth")
     np.save(save_path / f"train_losses.npy", train_losses)
