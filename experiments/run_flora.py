@@ -26,6 +26,7 @@ def main():
     parser.add_argument('--rand_distribution', type=str, default='normal')
     parser.add_argument('--clip_norm', action='store_true')
     parser.add_argument('--output_path', type=str, default='results')
+    parser.add_argument('--kappa', type=int, default=100)
 
     args = parser.parse_args()
 
@@ -45,7 +46,7 @@ def main():
         betas=(0.9, 0.999),
         eps=1e-8,
         rank=args.rank,
-        kappa=100,
+        kappa=args.kappa,
         seed=args.seed,
         rand_distribution=args.rand_distribution,
     )
