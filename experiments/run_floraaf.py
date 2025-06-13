@@ -51,7 +51,7 @@ def main():
 
     train_dataset, validation_dataset, test_dataset = get_mnist(seed=args.seed)
 
-    train_losses, validation_losses, validation_accs = train_model(model, args.epochs, train_dataset, validation_dataset, loss_fn, optimizer, args.clip_norm, device=device)
+    train_losses, validation_losses, validation_accs, _ = train_model(model, args.epochs, train_dataset, validation_dataset, loss_fn, optimizer, args.clip_norm, device=device)
     _, _, acc = evaluate_model(model, test_dataset, device=device)
 
     print('FloraAF ', 'lr: ', args.lr, ' rank: ', args.rank, ' kappa: ', args.kappa, ' seed: ', args.seed, 'Accuracy: ', acc * 100, '%')

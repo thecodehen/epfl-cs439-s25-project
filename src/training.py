@@ -15,12 +15,14 @@ def train_one_epoch(model, optimizer, loss_fn, batch_inputs, batch_labels, clip_
     loss.backward()
 
     if clip_norm:
-        nn.utils.clip_grad_norm_(model.parameters(), max_norm=1)
+        total_grad_norm = nn.utils.clip_grad_norm_(model.parameters(), max_norm=1)
+    else:
+        total_grad_norm = nn.utils.get_total_norm(model.parameters())
 
     # Adjust learning weights
     optimizer.step()
 
-    return loss.item()
+    return loss.item(), total_grad_norm.item()
 
 def train_model(model, epochs, train_dataset, validation_dataset, loss_fn, optimizer, clip_norm, device=None):
     train_inputs = train_dataset['inputs'].to(device)
@@ -32,11 +34,13 @@ def train_model(model, epochs, train_dataset, validation_dataset, loss_fn, optim
     train_losses = []
     validation_losses = []
     validation_accs = []
+    total_grad_norms = []
     for epoch in tqdm(range(epochs)):
         # Make sure gradient tracking is on, and do a pass over the data
         model.train(True)
-        train_loss = train_one_epoch(model, optimizer, loss_fn, train_inputs, train_labels, clip_norm)
+        train_loss, total_grad_norm = train_one_epoch(model, optimizer, loss_fn, train_inputs, train_labels, clip_norm)
         train_losses.append(train_loss)
+        total_grad_norms.append(total_grad_norm)
 
         # Set the model to evaluation mode, disabling dropout and using population
         # statistics for batch normalization.
@@ -54,7 +58,7 @@ def train_model(model, epochs, train_dataset, validation_dataset, loss_fn, optim
 
         epoch += 1
 
-    return train_losses, validation_losses, validation_accs
+    return train_losses, validation_losses, validation_accs, total_grad_norms
 
 def evaluate_model(model, test_dataset, device=None):
     inputs = test_dataset['inputs'].to(device)
