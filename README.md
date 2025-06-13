@@ -5,11 +5,12 @@ Implementation and Analysis of [Flora](https://arxiv.org/pdf/2402.03293) integra
 ## Project Structure
 
 ```
-├── README.md                       # This file
-├── requirements.txt                # Python dependencies
-├── .gitignore                      # Git ignore patterns
-├── plot.ipynb                     # Plotting and visualization notebook
-├── experiments/                   # Experiment runner scripts
+├── README.md                              # This file
+├── requirements.txt                       # Python dependencies
+├── .gitignore                             # Git ignore patterns
+├── plot.ipynb                             # Plotting and visualization notebook
+├── TrajectoryTracking_LossSurface.ipynb   # Optimizer trajectory tracking notebook
+├── experiments/                           # Experiment runner scripts
 │   ├── run_adam.py               
 │   ├── run_flora.py              
 │   ├── run_floraaf.py            
@@ -88,3 +89,6 @@ This script evaluates how different random distribution types affect Flora's per
 ## Results and Visualization
 
 After running experiments, use the [`plot.ipynb`](plot.ipynb) notebook to generate visualizations and analysis plots. Results are automatically saved in the `results/` directory organized by optimizer type and hyperparameters.
+
+## For Loss Surface and Optimizer Trajectory Tracking
+Run this notebook sequentially [`TrajectoryTracking_LossSurface`](TrajectoryTracking_LossSurface.ipynb) notebook to generate the visualizations.
