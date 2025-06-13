@@ -30,7 +30,6 @@ Implementation and Analysis of [Flora](https://arxiv.org/pdf/2402.03293) integra
 │   └── utils.py   
 └── pdf/                          # Generated plots and analysis
     ├── optimizer_comparison_final.pdf
-    ├── convergence_analysis.pdf
     ├── learning_rate.pdf
     ├── rank.pdf
     ├── kappa.pdf
