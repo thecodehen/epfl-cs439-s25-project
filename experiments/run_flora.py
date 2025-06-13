@@ -7,13 +7,13 @@ import torch.nn as nn
 
 import numpy as np
 
-from flora import FloraAdam
-from models import SimpleNeuralNetwork
-from training import (
+from src.flora import FloraAdam
+from src.models import SimpleNeuralNetwork
+from src.training import (
     train_model,
     evaluate_model,
 )
-from utils import get_mnist
+from src.utils import get_mnist
 
 def main():
     parser = argparse.ArgumentParser()
