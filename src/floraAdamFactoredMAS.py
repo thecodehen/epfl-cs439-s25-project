@@ -5,7 +5,11 @@ import numpy as np
 import torch
 from torch.optim.optimizer import Optimizer
 
-from src.utils import stable_randn, next_seed, split_seed
+from src.utils import (
+    next_seed,
+    split_seed,
+    stable_randn,
+)
 
 class FloraAdamFactoredMAS(Optimizer):
     def __init__(
